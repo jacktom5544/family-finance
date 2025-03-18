@@ -65,6 +65,27 @@ export default function ExpensePage() {
     date: ''
   });
 
+  // Add a number formatter function
+  const formatAmount = (amount: number) => {
+    return new Intl.NumberFormat('en-PH', {
+      maximumFractionDigits: 0
+    }).format(amount);
+  };
+
+  // Mouse position tracking for tooltips
+  useEffect(() => {
+    const trackMousePosition = (e: MouseEvent) => {
+      document.documentElement.style.setProperty('--mouse-x', `${e.clientX}px`);
+      document.documentElement.style.setProperty('--mouse-y', `${e.clientY}px`);
+    };
+
+    document.addEventListener('mousemove', trackMousePosition);
+    
+    return () => {
+      document.removeEventListener('mousemove', trackMousePosition);
+    };
+  }, []);
+
   // Fetch categories and expenses on component mount
   useEffect(() => {
     fetchCategories();
@@ -806,9 +827,9 @@ export default function ExpensePage() {
             <div>
               <p className="text-sm text-blue-600">Total Expenses</p>
               <p className="text-2xl font-bold text-blue-900">
-                ₱{filteredExpenses.reduce((total, expense) => {
-                  return total + (typeof expense.amount === 'string' ? Math.floor(parseFloat(expense.amount)) : Math.floor(expense.amount));
-                }, 0)}
+                ₱{formatAmount(filteredExpenses.reduce((total, expense) => {
+                  return total + (typeof expense.amount === 'string' ? parseFloat(expense.amount) : expense.amount);
+                }, 0))}
               </p>
             </div>
             <div>
@@ -968,12 +989,15 @@ export default function ExpensePage() {
                                 {dayExpenses.map(expense => (
                                   <div 
                                     key={expense._id}
-                                    className="px-2 py-1 rounded cursor-pointer transition-all duration-200 hover:shadow-md whitespace-nowrap"
-                                    style={{ backgroundColor: getCategoryColor(expense.category) }}
-                                    title={`${expense.category}: ${expense.note || 'No note'} - ${formattedDate}`}
+                                    className="px-2 py-1 rounded cursor-pointer transition-all duration-200 hover:shadow-md whitespace-nowrap tooltip"
+                                    style={{ 
+                                      backgroundColor: getCategoryColor(expense.category),
+                                      position: 'relative'
+                                    }}
+                                    data-tooltip={`${expense.category}: ${expense.note || 'No note'}`}
                                     onClick={() => openEditModal(expense)}
                                   >
-                                    ₱{typeof expense.amount === 'string' ? Math.floor(parseFloat(expense.amount)) : Math.floor(expense.amount)}
+                                    ₱{formatAmount(typeof expense.amount === 'string' ? parseFloat(expense.amount) : expense.amount)}
                                   </div>
                                 ))}
                               </div>
@@ -992,12 +1016,12 @@ export default function ExpensePage() {
                           });
                           
                           const dayTotal = dayExpenses.reduce((total, expense) => {
-                            return total + (typeof expense.amount === 'string' ? Math.floor(parseFloat(expense.amount)) : Math.floor(expense.amount));
+                            return total + (typeof expense.amount === 'string' ? parseFloat(expense.amount) : expense.amount);
                           }, 0);
 
                           return (
                             <div key={`total-${day}`} className="px-3 border-b border-gray-300 text-center h-10 flex items-center justify-center font-medium">
-                              {dayTotal > 0 && `₱${dayTotal}`}
+                              {dayTotal > 0 && `₱${formatAmount(dayTotal)}`}
                             </div>
                           );
                         })}
@@ -1038,8 +1062,7 @@ export default function ExpensePage() {
                               // Calculate category total
                               const categoryExpenses = filteredExpenses.filter(exp => exp.category === category.name);
                               const categoryTotal = categoryExpenses.reduce((total, expense) => {
-                                return total + (typeof expense.amount === 'string' ? 
-                                  Math.floor(parseFloat(expense.amount)) : Math.floor(expense.amount));
+                                return total + (typeof expense.amount === 'string' ? parseFloat(expense.amount) : expense.amount);
                               }, 0);
                               
                               return (
@@ -1076,12 +1099,15 @@ export default function ExpensePage() {
                                           {dayExpenses.map(expense => (
                                             <div 
                                               key={expense._id}
-                                              className="px-2 py-1 rounded cursor-pointer transition-all duration-200 hover:shadow-md text-center"
-                                              style={{ backgroundColor: getCategoryColor(category.name) }}
-                                              title={`${category.name}: ${expense.note || 'No note'} - ${formattedDate}`}
+                                              className="px-2 py-1 rounded cursor-pointer transition-all duration-200 hover:shadow-md text-center tooltip"
+                                              style={{ 
+                                                backgroundColor: getCategoryColor(category.name),
+                                                position: 'relative',
+                                              }}
+                                              data-tooltip={`${category.name} : ${expense.note || 'No note'}`}
                                               onClick={() => openEditModal(expense)}
                                             >
-                                              ₱{typeof expense.amount === 'string' ? Math.floor(parseFloat(expense.amount)) : Math.floor(expense.amount)}
+                                              ₱{formatAmount(typeof expense.amount === 'string' ? parseFloat(expense.amount) : expense.amount)}
                                             </div>
                                           ))}
                                         </div>
@@ -1091,7 +1117,7 @@ export default function ExpensePage() {
                                   
                                   {/* Category total */}
                                   <td className="px-3 py-1 bg-gray-50 border border-gray-300 font-medium text-center sticky right-0 z-10 shadow-sm">
-                                    {categoryTotal > 0 ? `₱${categoryTotal}` : ''}
+                                    {categoryTotal > 0 ? `₱${formatAmount(categoryTotal)}` : ''}
                                   </td>
                                 </tr>
                               );
@@ -1109,23 +1135,21 @@ export default function ExpensePage() {
                                 });
                                 
                                 const dayTotal = dayExpenses.reduce((total, expense) => {
-                                  return total + (typeof expense.amount === 'string' ? 
-                                    Math.floor(parseFloat(expense.amount)) : Math.floor(expense.amount));
+                                  return total + (typeof expense.amount === 'string' ? parseFloat(expense.amount) : expense.amount);
                                 }, 0);
                                 
                                 return (
                                   <td key={`total-${day}`} className="px-3 py-2 border border-gray-300 text-center font-bold bg-blue-50">
-                                    {dayTotal > 0 ? `₱${dayTotal}` : ''}
+                                    {dayTotal > 0 ? `₱${formatAmount(dayTotal)}` : ''}
                                   </td>
                                 );
                               })}
                               
                               {/* Grand total */}
                               <td className="px-3 py-2 bg-blue-100 border border-gray-300 font-bold text-center sticky right-0 z-10 shadow-sm">
-                                ₱{filteredExpenses.reduce((total, expense) => {
-                                  return total + (typeof expense.amount === 'string' ? 
-                                    Math.floor(parseFloat(expense.amount)) : Math.floor(expense.amount));
-                                }, 0)}
+                                ₱{formatAmount(filteredExpenses.reduce((total, expense) => {
+                                  return total + (typeof expense.amount === 'string' ? parseFloat(expense.amount) : expense.amount);
+                                }, 0))}
                               </td>
                             </tr>
                           </tbody>
@@ -1198,7 +1222,7 @@ export default function ExpensePage() {
                                 </span>
                               </td>
                               <td className="px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-900">
-                                ₱{typeof expense.amount === 'string' ? Math.floor(parseFloat(expense.amount)) : Math.floor(expense.amount)}
+                                ₱{formatAmount(typeof expense.amount === 'string' ? parseFloat(expense.amount) : expense.amount)}
                               </td>
                               <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">
                                 {expense.note || '-'}
@@ -1237,7 +1261,7 @@ export default function ExpensePage() {
       
       {/* Edit Expense Modal */}
       {isEditModalOpen && editingExpense && (
-        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
+        <div className="fixed inset-0 flex items-center justify-center z-50" style={{ backgroundColor: 'rgba(0, 0, 0, 0.7)' }}>
           <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
             <h3 className="text-lg font-medium mb-4">Edit Expense</h3>
             
@@ -1336,6 +1360,62 @@ export default function ExpensePage() {
           </div>
         </div>
       )}
+      
+      {/* Custom Tooltip Styles */}
+      <style jsx global>{`
+        .tooltip {
+          position: relative;
+          z-index: 10;
+        }
+        
+        .tooltip:hover::after {
+          content: attr(data-tooltip);
+          position: fixed;
+          z-index: 99999;
+          padding: 8px 12px;
+          background-color: #333;
+          color: white;
+          border-radius: 4px;
+          white-space: normal;
+          font-weight: normal;
+          min-width: 200px;
+          max-width: 300px;
+          text-align: center;
+          font-size: 14px;
+          pointer-events: none;
+          box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+          animation: tooltipFadeIn 0.1s ease;
+        }
+        
+        .tooltip:hover::before {
+          content: '';
+          position: fixed;
+          z-index: 99999;
+          border-width: 5px;
+          border-style: solid;
+          pointer-events: none;
+          animation: tooltipFadeIn 0.1s ease;
+        }
+        
+        /* Default tooltip position (above the element) */
+        .tooltip:hover::after {
+          left: calc(var(--mouse-x) + 15px);
+          top: calc(var(--mouse-y) - 15px);
+          transform: translateY(-100%);
+        }
+        
+        .tooltip:hover::before {
+          left: calc(var(--mouse-x) + 20px);
+          top: calc(var(--mouse-y) - 15px);
+          transform: translateY(-100%);
+          border-color: #333 transparent transparent transparent;
+        }
+
+        @keyframes tooltipFadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+      `}</style>
     </div>
   );
 } 

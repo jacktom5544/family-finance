@@ -170,6 +170,13 @@ export default function SavingPage() {
   
   // Calculate grand total in PHP
   const grandTotal = japaneseInPhp + totalPhilippinesSaving;
+
+  // Add a number formatter function
+  const formatAmount = (amount: number) => {
+    return new Intl.NumberFormat('en-PH', {
+      maximumFractionDigits: 0
+    }).format(amount);
+  };
   
   return (
     <div className="space-y-6">
@@ -365,7 +372,7 @@ export default function SavingPage() {
                   BPI Bank Saving
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  ₱{philippinesSaving.bpiBankSaving.toLocaleString()}
+                  ₱{formatAmount(philippinesSaving.bpiBankSaving)}
                 </td>
               </tr>
               <tr>
@@ -373,7 +380,7 @@ export default function SavingPage() {
                   BDO Bank Saving
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  ₱{philippinesSaving.bdoBankSaving.toLocaleString()}
+                  ₱{formatAmount(philippinesSaving.bdoBankSaving)}
                 </td>
               </tr>
               <tr>
@@ -381,7 +388,7 @@ export default function SavingPage() {
                   Union Bank Saving
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  ₱{philippinesSaving.unionBankSaving.toLocaleString()}
+                  ₱{formatAmount(philippinesSaving.unionBankSaving)}
                 </td>
               </tr>
               <tr>
@@ -389,7 +396,7 @@ export default function SavingPage() {
                   Gcash/Grab Saving
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  ₱{philippinesSaving.mobileWalletSaving.toLocaleString()}
+                  ₱{formatAmount(philippinesSaving.mobileWalletSaving)}
                 </td>
               </tr>
               <tr>
@@ -397,7 +404,7 @@ export default function SavingPage() {
                   Cash Saving
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  ₱{philippinesSaving.cashSaving.toLocaleString()}
+                  ₱{formatAmount(philippinesSaving.cashSaving)}
                 </td>
               </tr>
               <tr>
@@ -405,7 +412,7 @@ export default function SavingPage() {
                   Philippines Side Total
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">
-                  ₱{totalPhilippinesSaving.toLocaleString()}
+                  ₱{formatAmount(totalPhilippinesSaving)}
                 </td>
               </tr>
               <tr className="bg-gray-50">

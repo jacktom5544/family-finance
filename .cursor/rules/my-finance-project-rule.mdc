@@ -1,0 +1,18 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+-Guide Line
+Next.js 15.2.2(latest Version) with App Router
+TypeScript with strict typing
+MongoDB for database
+Tailwind CSS
+Cloudinary for image storage
+Recharts for graph/charts
+On Front End, No dicimal place
+On Front End, add decimal seperater (commma)
+Never edit the contents of .env.local
+
+
+

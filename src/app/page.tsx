@@ -57,6 +57,13 @@ export default function Home() {
     day: 'numeric' 
   });
 
+  // Add a number formatter function
+  const formatAmount = (amount: number) => {
+    return new Intl.NumberFormat('en-PH', {
+      maximumFractionDigits: 0
+    }).format(amount);
+  };
+
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold">Dashboard</h1>
@@ -72,7 +79,7 @@ export default function Home() {
             <h2 className="text-xl font-semibold mb-4">Daily Expense</h2>
             <div className="flex items-center justify-center h-40">
               <div className="text-center">
-                <p className="text-3xl font-bold text-blue-600">$163.00</p>
+                <p className="text-3xl font-bold text-blue-600">₱{formatAmount(163)}</p>
                 <p className="text-sm text-green-500 flex items-center justify-center">
                   <span className="mr-1">↑</span>
                   <span>11.2% Per day</span>
@@ -85,7 +92,7 @@ export default function Home() {
             <h2 className="text-xl font-semibold mb-4">Monthly Expense</h2>
             <div className="flex items-center justify-center h-40">
               <div className="text-center">
-                <p className="text-3xl font-bold text-blue-600">$1263.00</p>
+                <p className="text-3xl font-bold text-blue-600">₱{formatAmount(1263)}</p>
                 <p className="text-sm text-green-500 flex items-center justify-center">
                   <span className="mr-1">↑</span>
                   <span>11.2% Per month</span>
@@ -214,7 +221,7 @@ export default function Home() {
             <h2 className="text-xl font-semibold">Daily Transaction Limit</h2>
             <span className="text-xs font-medium px-2 py-1 bg-red-100 text-red-800 rounded-full">Highly risky</span>
           </div>
-          <p className="text-xl font-semibold mb-2">$1,900.00 <span className="text-sm font-normal text-gray-500">spent of $2,499.00</span></p>
+          <p className="text-xl font-semibold mb-2">₱{formatAmount(1900)} <span className="text-sm font-normal text-gray-500">spent of ₱{formatAmount(2499)}</span></p>
           <div className="w-full bg-gray-200 rounded-full h-2.5 mb-4">
             <div className="bg-blue-600 h-2.5 rounded-full" style={{ width: '76%' }}></div>
           </div>

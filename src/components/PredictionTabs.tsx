@@ -61,6 +61,13 @@ export default function PredictionTabs({ currentSaving = 0 }: { currentSaving?: 
   const [newIncomeFieldName, setNewIncomeFieldName] = useState('');
   const [newExpenseFieldName, setNewExpenseFieldName] = useState('');
 
+  // Add a number formatter function
+  const formatAmount = (amount: number) => {
+    return new Intl.NumberFormat('en-PH', {
+      maximumFractionDigits: 0
+    }).format(amount);
+  };
+
   // Fetch exchange rate
   const fetchExchangeRate = async () => {
     try {
@@ -547,28 +554,28 @@ export default function PredictionTabs({ currentSaving = 0 }: { currentSaving?: 
             <div className="bg-green-50 p-3 rounded-lg">
               <p className="text-sm font-medium text-green-800 mb-1">Total Income</p>
               <p className="text-xl font-bold text-green-600">
-                {Math.round(incomeTotal).toLocaleString()} ₱
+                ₱{formatAmount(incomeTotal)}
                 <span className="text-sm ml-1 font-normal">
-                  ({Math.round(incomeTotal * phpToJpy).toLocaleString()} ¥)
+                  ({formatAmount(incomeTotal * phpToJpy)} ¥)
                 </span>
               </p>
               <div className="mt-2 pt-2 border-t border-green-100">
                 <p className="text-xs text-green-700 flex justify-between">
                   <span>Mum's Total:</span>
-                  <span>{Math.round(mumsIncome).toLocaleString()} ₱</span>
+                  <span>₱{formatAmount(mumsIncome)}</span>
                 </p>
                 <p className="text-xs text-green-700 flex justify-between">
                   <span>Dad's Income:</span>
-                  <span>{Math.round(dadsIncome).toLocaleString()} ₱</span>
+                  <span>₱{formatAmount(dadsIncome)}</span>
                 </p>
               </div>
             </div>
             <div className="bg-red-50 p-3 rounded-lg">
               <p className="text-sm font-medium text-red-800 mb-1">Total Expense</p>
               <p className="text-xl font-bold text-red-600">
-                {Math.round(expenseTotal).toLocaleString()} ₱
+                ₱{formatAmount(expenseTotal)}
                 <span className="text-sm ml-1 font-normal">
-                  ({Math.round(expenseTotal * phpToJpy).toLocaleString()} ¥)
+                  ({formatAmount(expenseTotal * phpToJpy)} ¥)
                 </span>
               </p>
             </div>
@@ -577,9 +584,9 @@ export default function PredictionTabs({ currentSaving = 0 }: { currentSaving?: 
                 Balance
               </p>
               <p className={`text-xl font-bold ${balance >= 0 ? 'text-blue-600' : 'text-yellow-600'}`}>
-                {Math.round(balance).toLocaleString()} ₱
+                ₱{formatAmount(balance)}
                 <span className="text-sm ml-1 font-normal">
-                  ({Math.round(balance * phpToJpy).toLocaleString()} ¥)
+                  ({formatAmount(balance * phpToJpy)} ¥)
                 </span>
               </p>
             </div>
@@ -627,42 +634,44 @@ export default function PredictionTabs({ currentSaving = 0 }: { currentSaving?: 
                 Loading exchange rate...
               </div>
             )}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="bg-blue-50 p-4 rounded-lg">
                 <p className="text-sm font-medium text-blue-800 mb-1">Current Saving</p>
                 <p className="text-2xl font-bold text-blue-600">
-                  {Math.round(currentSaving || 0).toLocaleString()} ₱
+                  ₱{formatAmount(currentSaving || 0)}
                 </p>
                 <p className="text-sm text-blue-600">
-                  {Math.round((currentSaving || 0) * phpToJpy).toLocaleString()} ¥
+                  {formatAmount((currentSaving || 0) * phpToJpy)} ¥
                 </p>
               </div>
               <div className="bg-green-50 p-4 rounded-lg">
                 <p className="text-sm font-medium text-green-800 mb-1">Total Income</p>
                 <p className="text-2xl font-bold text-green-600">
-                  {Math.round(totalIncome).toLocaleString()} ₱
+                  ₱{formatAmount(totalIncome)}
                 </p>
                 <p className="text-sm text-green-600">
-                  {Math.round(totalIncome * phpToJpy).toLocaleString()} ¥
+                  {formatAmount(totalIncome * phpToJpy)} ¥
                 </p>
                 <div className="mt-2 pt-2 border-t border-green-100">
                   <p className="text-xs text-green-700 flex justify-between">
                     <span>Mum's Total:</span>
-                    <span>{Math.round(totalMumsIncome).toLocaleString()} ₱</span>
+                    <span>₱{formatAmount(totalMumsIncome)}</span>
                   </p>
                   <p className="text-xs text-green-700 flex justify-between">
                     <span>Dad's Income:</span>
-                    <span>{Math.round(totalDadsIncome).toLocaleString()} ₱</span>
+                    <span>₱{formatAmount(totalDadsIncome)}</span>
                   </p>
                 </div>
               </div>
+              
               <div className="bg-red-50 p-4 rounded-lg">
                 <p className="text-sm font-medium text-red-800 mb-1">Total Expense</p>
                 <p className="text-2xl font-bold text-red-600">
-                  {Math.round(totalExpense).toLocaleString()} ₱
+                  ₱{formatAmount(totalExpense)}
                 </p>
                 <p className="text-sm text-red-600">
-                  {Math.round(totalExpense * phpToJpy).toLocaleString()} ¥
+                  {formatAmount(totalExpense * phpToJpy)} ¥
                 </p>
               </div>
               <div className={`p-4 rounded-lg ${balance >= 0 ? 'bg-purple-50' : 'bg-yellow-50'}`}>
@@ -670,10 +679,10 @@ export default function PredictionTabs({ currentSaving = 0 }: { currentSaving?: 
                   Projected End-Year Saving
                 </p>
                 <p className={`text-2xl font-bold ${balance >= 0 ? 'text-purple-600' : 'text-yellow-600'}`}>
-                  {Math.round(projectedSaving).toLocaleString()} ₱
+                  ₱{formatAmount(projectedSaving)}
                 </p>
                 <p className={`text-sm ${balance >= 0 ? 'text-purple-600' : 'text-yellow-600'}`}>
-                  {Math.round(projectedSaving * phpToJpy).toLocaleString()} ¥
+                  {formatAmount(projectedSaving * phpToJpy)} ¥
                 </p>
               </div>
             </div>
