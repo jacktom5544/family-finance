@@ -10,7 +10,8 @@ import {
   FaPiggyBank, 
   FaRegCreditCard,
   FaCog,
-  FaSignOutAlt 
+  FaSignOutAlt,
+  FaUtensils
 } from 'react-icons/fa';
 import { MdMessage } from 'react-icons/md';
 
@@ -45,6 +46,14 @@ const Sidebar = () => {
               >
                 <FaMoneyBillWave className="mr-3" />
                 <span>Expense</span>
+              </Link>
+            </li>
+            <li>
+              <Link href="/pages/food" 
+                className={`flex items-center p-2 rounded-lg ${isActive('/pages/food') ? 'bg-blue-600' : 'hover:bg-gray-800'}`}
+              >
+                <FaUtensils className="mr-3" />
+                <span>Daily Food</span>
               </Link>
             </li>
             <li>
