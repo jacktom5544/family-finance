@@ -23,7 +23,7 @@ const Sidebar = () => {
   };
 
   return (
-    <div className="min-h-screen w-60 bg-gray-900 text-white p-4">
+    <div className="hidden xl:block min-h-screen w-60 bg-gray-900 text-white p-4">
       <div className="flex items-center mb-8">
         <span className="text-2xl font-bold">Cuddle</span>
       </div>

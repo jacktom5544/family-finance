@@ -893,74 +893,79 @@ export default function FoodPage() {
 
   return (
     <main className="container mx-auto px-4 py-6 max-w-6xl">
-      {renderMonthSelector()}
-      
-      <div className="space-y-6">
-        {isLoading ? (
-          <div className="w-full p-6 bg-white rounded-lg shadow text-center">
-            <div className="py-8">Loading data...</div>
-          </div>
-        ) : (
-          <>
-            {renderDailyBudgetSection()}
-            {renderDailyChart()}
-          </>
-        )}
+      <div>{renderMonthSelector()}</div>
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        
+        
+        
+          {isLoading ? (
+            <div className="w-full p-6 bg-white rounded-lg shadow text-center">
+              <div className="py-8">Loading data...</div>
+            </div>
+          ) : (
+            <>
+              <div className="bg-white p-6 rounded-lg shadow-md mb-6">
+                <h2 className="text-xl font-semibold mb-4">Add Food Expense</h2>
+                <form onSubmit={handleFoodSubmit} className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Date</label>
+                      <input
+                        type="date"
+                        name="date"
+                        value={foodData.date}
+                        onChange={handleFoodChange}
+                        required
+                        className="w-full border rounded p-2"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Amount</label>
+                      <input
+                        type="number"
+                        name="amount"
+                        value={foodData.amount}
+                        onChange={handleFoodChange}
+                        required
+                        min="0"
+                        step="1"
+                        className="w-full border rounded p-2"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Note</label>
+                      <input
+                        type="text"
+                        name="note"
+                        value={foodData.note}
+                        onChange={handleFoodChange}
+                        className="w-full border rounded p-2"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="flex justify-end">
+                    <button
+                      type="submit"
+                      disabled={isLoading}
+                      className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50"
+                    >
+                      {isLoading ? 'Saving...' : 'Save Food Expense'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+              {renderDailyBudgetSection()}
+             
+             
+            </>
+          )}
+        
       </div>
+      <div>{renderDailyChart()}</div>
       
-      <div className="bg-white p-6 rounded-lg shadow-md mb-8">
-        <h2 className="text-xl font-semibold mb-4">Add Food Expense</h2>
-        <form onSubmit={handleFoodSubmit} className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">Date</label>
-              <input
-                type="date"
-                name="date"
-                value={foodData.date}
-                onChange={handleFoodChange}
-                required
-                className="w-full border rounded p-2"
-              />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium mb-1">Amount</label>
-              <input
-                type="number"
-                name="amount"
-                value={foodData.amount}
-                onChange={handleFoodChange}
-                required
-                min="0"
-                step="1"
-                className="w-full border rounded p-2"
-              />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium mb-1">Note</label>
-              <input
-                type="text"
-                name="note"
-                value={foodData.note}
-                onChange={handleFoodChange}
-                className="w-full border rounded p-2"
-              />
-            </div>
-          </div>
-          
-          <div className="flex justify-end">
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50"
-            >
-              {isLoading ? 'Saving...' : 'Save Food Expense'}
-            </button>
-          </div>
-        </form>
-      </div>
       
       <div className="bg-white rounded-lg shadow-md mb-6">
         <div className="border-b border-gray-300 p-4">
