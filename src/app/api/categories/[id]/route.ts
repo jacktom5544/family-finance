@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
 import { ExpenseCategory } from '@/models/expense';
 
@@ -6,12 +7,12 @@ import { ExpenseCategory } from '@/models/expense';
 const MOCK_USER_ID = 'user123';
 
 export async function PUT(
-  request: NextRequest,
-  context: { params: { id: string } }
+  req: NextRequest,
+  { params }: { params: { id: string } }
 ) {
   try {
-    const id = context.params.id;
-    const data = await request.json();
+    const id = params.id;
+    const data = await req.json();
     const { name } = data;
     
     if (!name || !name.trim()) {
@@ -42,11 +43,11 @@ export async function PUT(
 }
 
 export async function DELETE(
-  request: NextRequest,
-  context: { params: { id: string } }
+  req: NextRequest,
+  { params }: { params: { id: string } }
 ) {
   try {
-    const id = context.params.id;
+    const id = params.id;
     
     await connectToDatabase();
     
