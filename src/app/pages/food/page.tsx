@@ -432,13 +432,16 @@ export default function FoodPage() {
 
     // Calculate monthly total
     const monthlyTotal = allDaysData.reduce((sum, item) => sum + item.value, 0);
+    // Calculate monthly average from days with expenses only
+    const daysWithExpenses = dailyData.length;
+    const monthlyAverage = daysWithExpenses > 0 ? monthlyTotal / daysWithExpenses : 0;
 
     return (
       <div className="w-full p-6 bg-white rounded-lg shadow mb-6">
         <div className="flex justify-between items-center mb-5">
           <h3 className="text-lg font-semibold">Daily Food Expenses</h3>
           <div className="text-sm font-medium text-gray-600">
-            Monthly Total: <span className="text-blue-600 font-bold">{formatAmount(monthlyTotal)}</span>
+            Monthly Average: <span className="text-blue-600 font-bold">{formatAmount(monthlyAverage)}</span>
           </div>
         </div>
         
