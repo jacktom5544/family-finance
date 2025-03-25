@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import LoginForm from '@/components/LoginForm';
 import { useAuth } from './context/AuthContext';
 import { fetchExpenses, fetchBudget, fetchMonthlyIncome, fetchMonthlyExpenses } from '@/app/utils/api';
@@ -20,6 +21,7 @@ import {
 } from 'recharts';
 
 export default function Home() {
+  const router = useRouter();
   const { isLoggedIn } = useAuth();
   const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
   const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth());
@@ -28,11 +30,24 @@ export default function Home() {
   const [monthlyIncomeItems, setMonthlyIncomeItems] = useState<any[]>([]);
   const [monthlyExpenseItems, setMonthlyExpenseItems] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
 
   // Fetch all necessary data for the dashboard
   useEffect(() => {
     fetchDashboardData();
   }, [selectedYear, selectedMonth]);
+
+  // If there's an error loading, redirect to a known working page
+  useEffect(() => {
+    if (loadError) {
+      // Wait a bit and redirect to the expense page as a fallback
+      const timer = setTimeout(() => {
+        router.push('/pages/expense');
+      }, 3000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [loadError, router]);
 
   // Reset the budget when the component unmounts or before new data loads
   useEffect(() => {
@@ -45,6 +60,7 @@ export default function Home() {
     // Always reset budget to 0 immediately
     setSavedDailyBudget(0);
     setIsLoading(true);
+    setLoadError(false); // Reset error state at the start
     try {
       // Fetch food expenses with the current month and year selection
       const foodResponse = await fetchExpenses(selectedMonth, selectedYear);
@@ -116,6 +132,7 @@ export default function Home() {
       setMonthlyIncomeItems([]);
       setMonthlyExpenseItems([]);
       setSavedDailyBudget(0);
+      setLoadError(true);
     } finally {
       setIsLoading(false);
     }
@@ -198,12 +215,12 @@ export default function Home() {
     } else if (percentage > 90) {
       return '😬'; // Nearly over budget
     } else if (percentage > 75) {
-      return '😐'; // Getting close to budget
+      return '😐'; // Be careful
     } else if (percentage > 50) {
-      return '🙂'; // Doing well
+      return '🙂'; // Doing okay
+    } else {
+      return '😄'; // Well under budget
     }
-    
-    return '😊';  // Happy emoji for well under budget
   };
 
   // Get daily expenses for current month
@@ -571,6 +588,27 @@ export default function Home() {
       </div>
     );
   };
+
+  // If there's a loading error, show an error message
+  if (loadError) {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen">
+        <h1 className="text-2xl font-bold mb-4">Failed to load dashboard data</h1>
+        <p className="mb-4">Redirecting to the expense page...</p>
+        <button 
+          onClick={() => router.push('/pages/expense')} 
+          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+        >
+          Go to Expense Page
+        </button>
+      </div>
+    );
+  }
+  
+  // If not logged in, show login form
+  if (!isLoggedIn) {
+    return <LoginForm />;
+  }
 
   return (
     <div className="container mx-auto p-4">
