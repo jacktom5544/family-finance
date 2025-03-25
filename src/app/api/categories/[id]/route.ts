@@ -5,15 +5,9 @@ import { ExpenseCategory } from '@/models/expense';
 // Mock user ID (in a real app, you would get this from an authenticated session)
 const MOCK_USER_ID = 'user123';
 
-type RouteContext = {
-  params: {
-    id: string;
-  };
-};
-
 export async function PUT(
   request: NextRequest,
-  { params }: RouteContext
+  { params }: { params: { id: string } }
 ) {
   try {
     const id = params.id;
@@ -49,7 +43,7 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: RouteContext
+  { params }: { params: { id: string } }
 ) {
   try {
     const id = params.id;
