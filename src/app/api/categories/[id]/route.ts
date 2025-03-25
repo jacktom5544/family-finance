@@ -5,12 +5,18 @@ import { ExpenseCategory } from '@/models/expense';
 // Mock user ID (in a real app, you would get this from an authenticated session)
 const MOCK_USER_ID = 'user123';
 
+type Props = {
+  params: {
+    id: string;
+  };
+};
+
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  props: Props
 ) {
   try {
-    const id = params.id;
+    const id = props.params.id;
     const data = await request.json();
     const { name } = data;
     
@@ -43,10 +49,10 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  props: Props
 ) {
   try {
-    const id = params.id;
+    const id = props.params.id;
     
     await connectToDatabase();
     
