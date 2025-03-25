@@ -67,8 +67,6 @@ const LoadingFallback = () => (
 );
 
 export default function Home() {
-  // Show simple loading state immediately
-  const [isInitialized, setIsInitialized] = useState(false);
   const router = useRouter();
   const { isLoggedIn } = useAuth();
   const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
@@ -81,184 +79,78 @@ export default function Home() {
   const [loadError, setLoadError] = useState(false);
   const [useStaticFallback, setUseStaticFallback] = useState(true);
 
-  // Define fetchDashboardData as a useCallback to avoid recreating it on each render
-  const fetchDashboardData = useCallback(async () => {
-    // Always reset budget to 0 immediately
-    setSavedDailyBudget(0);
-    setIsLoading(true);
-    setLoadError(false); // Reset error state at the start
-    try {
-      // Fetch food expenses with the current month and year selection
-      const foodResponse = await fetchExpenses(selectedMonth, selectedYear);
-      console.log('Food expenses response:', foodResponse);
-      
-      // Ensure we have a valid array of food items with properly formatted data
-      if (Array.isArray(foodResponse)) {
-        // Process food items to ensure consistent data format
-        const processedFoodItems = foodResponse.map(item => ({
-          ...item,
-          // Ensure amount is a number
-          amount: typeof item.amount === 'number' ? item.amount : parseFloat(item.amount || '0'),
-          // Ensure date is properly formatted
-          date: item.date ? new Date(item.date) : null
-        }));
-        console.log('Processed food items:', processedFoodItems);
-        setMonthlyFoodItems(processedFoodItems);
-      } else {
-        console.error('Invalid food response format:', foodResponse);
-        setMonthlyFoodItems([]);
-      }
-      
-      // Fetch daily budget for food
-      const budgetResponse = await fetchBudget(selectedMonth, selectedYear);
-      console.log('Budget response:', budgetResponse);
-      
-      // Ensure budget is a number and greater than zero
-      const budgetValue = budgetResponse?.dailyFoodBudget || 0;
-      // Extra strict validation to ensure budget is always a positive number or exactly 0
-      const numericBudget = typeof budgetValue === 'number' ? budgetValue : parseFloat(budgetValue || '0');
-      const finalBudgetValue = numericBudget > 0 ? numericBudget : 0;
-      console.log(`Setting budget to: ${finalBudgetValue}`);
-      setSavedDailyBudget(finalBudgetValue);
-      
-      // Fetch actual income data from the income page
-      const incomeResponse = await fetchMonthlyIncome(selectedMonth, selectedYear);
-      
-      // Ensure we have a valid array of income items
-      if (Array.isArray(incomeResponse)) {
-        setMonthlyIncomeItems(incomeResponse.map(item => ({
-          ...item,
-          // Ensure amount is a number
-          amount: typeof item.amount === 'number' ? item.amount : parseFloat(item.amount || '0')
-        })));
-      } else {
-        console.error('Invalid income response format:', incomeResponse);
-        setMonthlyIncomeItems([]);
-      }
-      
-      // Fetch actual expense data from the expense page
-      const expensesResponse = await fetchMonthlyExpenses(selectedMonth, selectedYear);
-      
-      // Ensure we have a valid array of expense items
-      if (Array.isArray(expensesResponse)) {
-        setMonthlyExpenseItems(expensesResponse.map(item => ({
-          ...item,
-          // Ensure amount is a number
-          amount: typeof item.amount === 'number' ? item.amount : parseFloat(item.amount || '0')
-        })));
-      } else {
-        console.error('Invalid expenses response format:', expensesResponse);
-        setMonthlyExpenseItems([]);
-      }
-      
-    } catch (error) {
-      console.error('Error fetching dashboard data:', error);
-      // Set empty arrays for all data to avoid undefined errors
-      setMonthlyFoodItems([]);
-      setMonthlyIncomeItems([]);
-      setMonthlyExpenseItems([]);
-      setSavedDailyBudget(0);
-      setLoadError(true);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [selectedMonth, selectedYear]); // Add dependencies
-
-  useEffect(() => {
-    // Mark initialization complete after component mounts
-    setIsInitialized(true);
-  }, []);
-
-  // Show fallback immediately if not initialized
-  if (!isInitialized) {
-    return <LoadingFallback />;
-  }
-
-  // Attempt to load data, but fall back to static page if it fails
-  useEffect(() => {
-    let isMounted = true;
-    
-    const loadData = async () => {
-      try {
-        // Only continue if component is still mounted
-        if (isMounted) {
-          // Try to fetch dashboard data
-          await fetchDashboardData();
-          // If successful, use the dynamic dashboard
-          setUseStaticFallback(false);
-        }
-      } catch (error) {
-        console.error("Failed to initialize dashboard:", error);
-        // Keep using the static fallback
-        if (isMounted) {
-          setUseStaticFallback(true);
-          setLoadError(true);
-        }
-      }
-    };
-    
-    // Only try to load data if the user is logged in
-    if (isLoggedIn) {
-      loadData();
-    }
-    
-    // Cleanup function to prevent state updates after unmount
-    return () => {
-      isMounted = false;
-    };
-  }, [isLoggedIn, fetchDashboardData]); // Add fetchDashboardData as dependency
-
   // Fetch all necessary data for the dashboard
   useEffect(() => {
-    let isMounted = true;
-    
-    const loadData = async () => {
-      if (!useStaticFallback && isMounted) {
-        await fetchDashboardData();
+    // Skip data fetching if not logged in
+    if (!isLoggedIn) {
+      setIsLoading(false);
+      return;
+    }
+
+    const fetchDashboardData = async () => {
+      setIsLoading(true);
+      setLoadError(false);
+      try {
+        // Fetch food expenses
+        const foodResponse = await fetchExpenses(selectedMonth, selectedYear);
+        if (Array.isArray(foodResponse)) {
+          setMonthlyFoodItems(foodResponse.map(item => ({
+            ...item,
+            amount: typeof item.amount === 'number' ? item.amount : parseFloat(item.amount || '0'),
+            date: item.date ? new Date(item.date) : null
+          })));
+        } else {
+          setMonthlyFoodItems([]);
+        }
+        
+        // Fetch budget
+        const budgetResponse = await fetchBudget(selectedMonth, selectedYear);
+        const budgetValue = budgetResponse?.dailyFoodBudget || 0;
+        const numericBudget = typeof budgetValue === 'number' ? budgetValue : parseFloat(budgetValue || '0');
+        setSavedDailyBudget(numericBudget > 0 ? numericBudget : 0);
+        
+        // Fetch income
+        const incomeResponse = await fetchMonthlyIncome(selectedMonth, selectedYear);
+        if (Array.isArray(incomeResponse)) {
+          setMonthlyIncomeItems(incomeResponse.map(item => ({
+            ...item,
+            amount: typeof item.amount === 'number' ? item.amount : parseFloat(item.amount || '0')
+          })));
+        } else {
+          setMonthlyIncomeItems([]);
+        }
+        
+        // Fetch expenses
+        const expensesResponse = await fetchMonthlyExpenses(selectedMonth, selectedYear);
+        if (Array.isArray(expensesResponse)) {
+          setMonthlyExpenseItems(expensesResponse.map(item => ({
+            ...item,
+            amount: typeof item.amount === 'number' ? item.amount : parseFloat(item.amount || '0')
+          })));
+        } else {
+          setMonthlyExpenseItems([]);
+        }
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error);
+        setMonthlyFoodItems([]);
+        setMonthlyIncomeItems([]);
+        setMonthlyExpenseItems([]);
+        setSavedDailyBudget(0);
+        setLoadError(true);
+      } finally {
+        setIsLoading(false);
       }
     };
-    
-    loadData();
-    
-    return () => {
-      isMounted = false;
-    };
-  }, [selectedYear, selectedMonth, useStaticFallback, fetchDashboardData]);
 
-  // If there's an error loading, redirect to a known working page
-  useEffect(() => {
-    let timer: NodeJS.Timeout | null = null;
-    
-    if (loadError) {
-      // Wait a bit and redirect to the expense page as a fallback
-      timer = setTimeout(() => {
-        router.push('/pages/expense');
-      }, 3000);
-    }
-    
-    return () => {
-      if (timer) clearTimeout(timer);
-    };
-  }, [loadError, router]);
+    fetchDashboardData();
+  }, [isLoggedIn, selectedMonth, selectedYear]);
 
-  // Reset the budget when the component unmounts or before new data loads
-  useEffect(() => {
-    return () => {
-      setSavedDailyBudget(0);
-    };
-  }, [selectedYear, selectedMonth]);
-
-  // If not logged in or using static fallback, show the static home page
-  if (!isLoggedIn || useStaticFallback) {
-    return <StaticHome />;
-  }
-
-  // If there's a loading error, show an error message
+  // If there's an error loading, show an error message with a button to navigate to expenses
   if (loadError) {
     return (
-      <div className="flex flex-col items-center justify-center h-screen">
+      <div className="flex flex-col items-center justify-center h-screen p-6">
         <h1 className="text-2xl font-bold mb-4">Failed to load dashboard data</h1>
-        <p className="mb-4">Redirecting to the expense page...</p>
+        <p className="mb-6">Something went wrong while loading the dashboard.</p>
         <button 
           onClick={() => router.push('/pages/expense')} 
           className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
@@ -269,12 +161,29 @@ export default function Home() {
     );
   }
 
+  // If not logged in, show the login form
+  if (!isLoggedIn) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen p-4">
+        <h1 className="text-3xl font-bold mb-8">Family Finance</h1>
+        <LoginForm />
+      </div>
+    );
+  }
+
+  // If still loading, show a loading indicator
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen">
+        <h2 className="text-xl mb-4">Loading dashboard...</h2>
+        <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
   // Calculate average daily expense
   const calculateAverageDailyExpense = () => {
     if (!monthlyFoodItems || monthlyFoodItems.length === 0) return 0;
-    
-    // Make sure we're working with the correct data format
-    console.log('Monthly food items for average calculation:', monthlyFoodItems);
     
     // Group expenses by day to get daily totals first
     const dailyTotals: { [key: string]: number } = {};
@@ -282,43 +191,22 @@ export default function Home() {
     monthlyFoodItems.forEach(expense => {
       if (expense.date) {
         const expenseDate = new Date(expense.date);
+        const dateKey = expenseDate.toISOString().split('T')[0];
         
-        // Only include if it's a valid date and within the selected month/year
-        if (!isNaN(expenseDate.getTime()) && 
-            expenseDate.getMonth() === selectedMonth && 
-            expenseDate.getFullYear() === selectedYear) {
-            
-          // Get the day as a string (e.g., "1", "2", etc.)
-          const day = expenseDate.getDate().toString();
-          
-          // Ensure amount is a number
-          const amount = typeof expense.amount === 'number' ? expense.amount : parseFloat(expense.amount || '0');
-          
-          // Add to the daily total
-          if (!dailyTotals[day]) {
-            dailyTotals[day] = 0;
-          }
-          dailyTotals[day] += amount;
+        if (!dailyTotals[dateKey]) {
+          dailyTotals[dateKey] = 0;
         }
+        
+        dailyTotals[dateKey] += parseFloat(expense.amount);
       }
     });
     
-    // Calculate total expenses for the month
-    const totalExpenses = Object.values(dailyTotals).reduce((sum, value) => sum + value, 0);
+    // Calculate the average of all daily totals
+    const totalDays = Object.keys(dailyTotals).length;
+    if (totalDays === 0) return 0;
     
-    // Get number of days with expenses
-    const daysWithExpenses = Object.keys(dailyTotals).length;
-    
-    console.log(`Days with expenses: ${daysWithExpenses}, Total expenses: ${totalExpenses}`);
-    
-    // If we have days with expenses, use that for the average
-    if (daysWithExpenses > 0) {
-      return totalExpenses / daysWithExpenses;
-    }
-    
-    // Otherwise, fall back to dividing by days in month
-    const daysInMonth = new Date(selectedYear, selectedMonth + 1, 0).getDate();
-    return totalExpenses / daysInMonth;
+    const sumOfDailyTotals = Object.values(dailyTotals).reduce((sum, amount) => sum + amount, 0);
+    return sumOfDailyTotals / totalDays;
   };
 
   // Check if over budget
@@ -358,8 +246,6 @@ export default function Home() {
   const getDailyExpenses = () => {
     if (!monthlyFoodItems || monthlyFoodItems.length === 0) return [];
     
-    console.log('Monthly food items for daily expenses chart:', monthlyFoodItems);
-    
     // Group expenses by day
     const dailyExpenses: { day: string; value: number }[] = [];
     
@@ -395,7 +281,6 @@ export default function Home() {
       }
     });
     
-    console.log('Processed daily expenses data:', dailyExpenses);
     return dailyExpenses;
   };
 
