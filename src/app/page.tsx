@@ -311,10 +311,12 @@ export default function Home() {
     const totalExpenses = getTotalExpenses();
     const balance = totalIncome - totalExpenses;
     
-    const incomeData = getIncomeChartData();
-    const expenseData = getExpenseChartData();
-    
-    const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
+    // Data for the bar chart
+    const chartData = [
+      { name: 'Income', value: totalIncome, color: '#3B82F6' },
+      { name: 'Expenses', value: totalExpenses, color: '#EF4444' },
+      { name: 'Balance', value: balance, color: '#10B981' }
+    ];
 
     return (
       <div className="w-full p-6 bg-white rounded-lg shadow mb-6">
@@ -325,7 +327,7 @@ export default function Home() {
           </div>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-2 gap-6">
           {/* Summary Section */}
           <div className="flex flex-col space-y-4">
             <div className="p-4 bg-blue-50 rounded-lg">
@@ -344,57 +346,30 @@ export default function Home() {
             </div>
           </div>
           
-          {/* Charts Section */}
-          <div className="grid grid-cols-1 gap-4">
-            <div className="h-[180px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={incomeData}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    outerRadius={60}
-                    fill="#8884d8"
-                    dataKey="value"
-                    nameKey="name"
-                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                  >
-                    {incomeData.map((entry, index) => (
-                      <Cell key={`income-cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip formatter={(value) => formatAmount(value as number)} />
-                  <Legend />
-                </PieChart>
-              </ResponsiveContainer>
-              <div className="text-center text-sm font-medium">Income Sources</div>
-            </div>
-            
-            <div className="h-[180px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={expenseData}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    outerRadius={60}
-                    fill="#8884d8"
-                    dataKey="value"
-                    nameKey="name"
-                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                  >
-                    {expenseData.map((entry, index) => (
-                      <Cell key={`expense-cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip formatter={(value) => formatAmount(value as number)} />
-                  <Legend />
-                </PieChart>
-              </ResponsiveContainer>
-              <div className="text-center text-sm font-medium">Expense Categories</div>
-            </div>
+          {/* Bar Chart Section */}
+          <div className="h-[250px] mt-4">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={chartData}
+                margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                <XAxis dataKey="name" />
+                <YAxis 
+                  tickFormatter={(value) => formatAmount(value)}
+                  width={80}
+                />
+                <Tooltip 
+                  formatter={(value) => formatAmount(value as number)}
+                  contentStyle={{ border: '1px solid #e2e8f0', borderRadius: '0.375rem', padding: '10px' }}
+                />
+                <Bar dataKey="value" radius={[8, 8, 0, 0]}>
+                  {chartData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
           </div>
         </div>
       </div>
