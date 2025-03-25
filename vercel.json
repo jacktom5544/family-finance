@@ -1,6 +1,6 @@
 {
   "rewrites": [
-    { "source": "/(.*)", "destination": "/" }
+    { "source": "/((?!api|_next/static|_next/image).*)", "destination": "/index.html" }
   ],
   "headers": [
     {
@@ -12,5 +12,7 @@
         }
       ]
     }
-  ]
+  ],
+  "cleanUrls": true,
+  "trailingSlash": false
 } 

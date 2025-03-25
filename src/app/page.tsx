@@ -7,6 +7,7 @@ import { useAuth } from './context/AuthContext';
 import { fetchExpenses, fetchBudget, fetchMonthlyIncome, fetchMonthlyExpenses } from '@/app/utils/api';
 import { formatAmount } from '@/app/utils/formatter';
 import StaticHome from './static-home';
+import Link from 'next/link';
 import { 
   BarChart, 
   Bar, 
@@ -21,7 +22,53 @@ import {
   Cell
 } from 'recharts';
 
+// This is a fallback component rendered before any React hydration
+const LoadingFallback = () => (
+  <div style={{
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: '100vh',
+    padding: '20px'
+  }}>
+    <h1 style={{ marginBottom: '20px', fontSize: '24px' }}>Family Finance</h1>
+    <p style={{ marginBottom: '20px' }}>Loading application...</p>
+    <div style={{ 
+      display: 'flex',
+      gap: '10px'
+    }}>
+      <a 
+        href="/test-page" 
+        style={{
+          padding: '10px 20px',
+          backgroundColor: '#3b82f6',
+          color: 'white',
+          borderRadius: '5px',
+          textDecoration: 'none'
+        }}
+      >
+        Test Page
+      </a>
+      <a 
+        href="/alt-page" 
+        style={{
+          padding: '10px 20px',
+          backgroundColor: '#10b981',
+          color: 'white',
+          borderRadius: '5px',
+          textDecoration: 'none'
+        }}
+      >
+        Alt Page
+      </a>
+    </div>
+  </div>
+);
+
 export default function Home() {
+  // Show simple loading state immediately
+  const [isInitialized, setIsInitialized] = useState(false);
   const router = useRouter();
   const { isLoggedIn } = useAuth();
   const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
@@ -33,6 +80,16 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
   const [useStaticFallback, setUseStaticFallback] = useState(true);
+
+  useEffect(() => {
+    // Mark initialization complete after component mounts
+    setIsInitialized(true);
+  }, []);
+
+  // Show fallback immediately if not initialized
+  if (!isInitialized) {
+    return <LoadingFallback />;
+  }
 
   // Attempt to load data, but fall back to static page if it fails
   useEffect(() => {
