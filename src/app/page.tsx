@@ -2,6 +2,9 @@
 
 import React, { useState } from 'react';
 import { YearlyBarChart, MonthlyLineChart } from '../components/Charts';
+import LoginForm from '@/components/LoginForm';
+import { useAuth } from './context/AuthContext';
+import LogoutButton from '@/components/LogoutButton';
 
 // Sample data - in a real app, this would come from the database
 const yearlyData = [
@@ -50,6 +53,7 @@ const dailyData = [
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
 
 export default function Home() {
+  const { isLoggedIn } = useAuth();
   const [chartView, setChartView] = useState<'daily' | 'monthly'>('monthly');
   const currentDate = new Date().toLocaleDateString('en-US', { 
     year: 'numeric',
@@ -64,8 +68,15 @@ export default function Home() {
     }).format(amount);
   };
 
+  // If user is not logged in, show only the login form
+  if (!isLoggedIn) {
+    return <LoginForm />;
+  }
+
+  // If user is logged in, show the dashboard with logout button
   return (
     <div className="space-y-6">
+      <LogoutButton />
       <h1 className="text-3xl font-bold">Dashboard</h1>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

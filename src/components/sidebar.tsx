@@ -14,13 +14,20 @@ import {
   FaUtensils
 } from 'react-icons/fa';
 import { MdMessage } from 'react-icons/md';
+import { useAuth } from '@/app/context/AuthContext';
 
 const Sidebar = () => {
   const pathname = usePathname();
+  const { isLoggedIn, logout } = useAuth();
 
   const isActive = (path: string) => {
     return pathname === path;
   };
+
+  // If user is not logged in, don't render the sidebar
+  if (!isLoggedIn) {
+    return null;
+  }
 
   return (
     <div className="hidden xl:block min-h-screen w-60 bg-gray-900 text-white p-4">
@@ -101,12 +108,13 @@ const Sidebar = () => {
       </div>
 
       <div className="mt-auto">
-        <Link href="/logout" 
-          className="flex items-center p-2 rounded-lg hover:bg-gray-800"
+        <button
+          onClick={logout}
+          className="flex items-center p-2 rounded-lg hover:bg-gray-800 w-full"
         >
           <FaSignOutAlt className="mr-3" />
           <span>Log out</span>
-        </Link>
+        </button>
       </div>
     </div>
   );

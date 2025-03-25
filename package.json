@@ -12,6 +12,8 @@
     "migrate-data:force": "cross-env FORCE_OVERWRITE=true node scripts/migrate-data.js"
   },
   "dependencies": {
+    "@types/bcrypt": "^5.0.2",
+    "bcrypt": "^5.1.1",
     "chart.js": "^4.4.8",
     "cloudinary": "^2.6.0",
     "mongodb": "^6.14.2",
