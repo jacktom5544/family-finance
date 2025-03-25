@@ -1,11 +1,39 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Enable rewrites to handle 404s
+  // Specify both pages and app directory usage
+  experimental: {
+    appDir: true,
+  },
+  // Handle fallbacks to ensure a page is always rendered
   async rewrites() {
     return [
       {
+        source: '/',
+        destination: '/index',
+      },
+      {
         source: '/:path*',
+        destination: '/:path*',
+      },
+      {
+        source: '/:path*',
+        destination: '/index',
+        has: [
+          {
+            type: 'header',
+            key: 'x-vercel-error',
+          },
+        ],
+      },
+    ];
+  },
+  // Add proper fallback behavior
+  async redirects() {
+    return [
+      {
+        source: '/index.html',
         destination: '/',
+        permanent: true,
       },
     ];
   },
