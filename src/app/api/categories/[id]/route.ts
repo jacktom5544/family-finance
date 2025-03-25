@@ -6,12 +6,13 @@ import { ExpenseCategory } from '@/models/expense';
 // Mock user ID (in a real app, you would get this from an authenticated session)
 const MOCK_USER_ID = 'user123';
 
-export async function PUT(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function PUT(req: NextRequest) {
   try {
-    const id = params.id;
+    // Extract id from URL path
+    const url = new URL(req.url);
+    const pathParts = url.pathname.split('/');
+    const id = pathParts[pathParts.length - 1];
+    
     const data = await req.json();
     const { name } = data;
     
@@ -42,12 +43,12 @@ export async function PUT(
   }
 }
 
-export async function DELETE(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(req: NextRequest) {
   try {
-    const id = params.id;
+    // Extract id from URL path
+    const url = new URL(req.url);
+    const pathParts = url.pathname.split('/');
+    const id = pathParts[pathParts.length - 1];
     
     await connectToDatabase();
     
