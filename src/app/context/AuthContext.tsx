@@ -13,29 +13,45 @@ interface AuthContextType {
   login: (username: string, password: string) => Promise<boolean>;
   logout: () => void;
   isLoading: boolean;
+  authError: boolean;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+// Default context with safe values
+const AuthContext = createContext<AuthContextType>({
+  isLoggedIn: false,
+  user: null,
+  login: async () => false,
+  logout: () => {},
+  isLoading: false,
+  authError: false
+});
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [authError, setAuthError] = useState(false);
 
   // Check if user was previously logged in
   useEffect(() => {
-    const userData = localStorage.getItem('user');
-    if (userData) {
-      try {
-        const parsedUser = JSON.parse(userData);
-        setUser(parsedUser);
-        setIsLoggedIn(true);
-      } catch (error) {
-        console.error('Error parsing user data from localStorage', error);
-        localStorage.removeItem('user');
+    try {
+      const userData = localStorage.getItem('user');
+      if (userData) {
+        try {
+          const parsedUser = JSON.parse(userData);
+          setUser(parsedUser);
+          setIsLoggedIn(true);
+        } catch (error) {
+          console.error('Error parsing user data from localStorage', error);
+          localStorage.removeItem('user');
+        }
       }
+    } catch (error) {
+      console.error('Error accessing localStorage:', error);
+      setAuthError(true);
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   }, []);
 
   const login = async (username: string, password: string) => {
@@ -55,17 +71,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setIsLoggedIn(true);
         setUser(data.user);
         // Store user data in localStorage
-        localStorage.setItem('user', JSON.stringify(data.user));
-        setIsLoading(false);
+        try {
+          localStorage.setItem('user', JSON.stringify(data.user));
+        } catch (error) {
+          console.error('Error saving to localStorage:', error);
+        }
         return true;
       } else {
-        setIsLoading(false);
         return false;
       }
     } catch (error) {
       console.error('Login error:', error);
-      setIsLoading(false);
+      setAuthError(true);
       return false;
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -73,11 +93,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoggedIn(false);
     setUser(null);
     // Remove user data from localStorage
-    localStorage.removeItem('user');
+    try {
+      localStorage.removeItem('user');
+    } catch (error) {
+      console.error('Error removing from localStorage:', error);
+    }
   };
 
   return (
-    <AuthContext.Provider value={{ isLoggedIn, user, login, logout, isLoading }}>
+    <AuthContext.Provider value={{ isLoggedIn, user, login, logout, isLoading, authError }}>
       {children}
     </AuthContext.Provider>
   );
@@ -85,8 +109,5 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 export function useAuth() {
   const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
   return context;
 } 

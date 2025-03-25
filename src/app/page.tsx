@@ -6,6 +6,7 @@ import LoginForm from '@/components/LoginForm';
 import { useAuth } from './context/AuthContext';
 import { fetchExpenses, fetchBudget, fetchMonthlyIncome, fetchMonthlyExpenses } from '@/app/utils/api';
 import { formatAmount } from '@/app/utils/formatter';
+import StaticHome from './static-home';
 import { 
   BarChart, 
   Bar, 
@@ -31,11 +32,36 @@ export default function Home() {
   const [monthlyExpenseItems, setMonthlyExpenseItems] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
+  const [useStaticFallback, setUseStaticFallback] = useState(true);
+
+  // Attempt to load data, but fall back to static page if it fails
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        // Try to fetch dashboard data
+        await fetchDashboardData();
+        // If successful, use the dynamic dashboard
+        setUseStaticFallback(false);
+      } catch (error) {
+        console.error("Failed to initialize dashboard:", error);
+        // Keep using the static fallback
+        setUseStaticFallback(true);
+        setLoadError(true);
+      }
+    };
+    
+    // Only try to load data if the user is logged in
+    if (isLoggedIn) {
+      loadData();
+    }
+  }, [isLoggedIn]);
 
   // Fetch all necessary data for the dashboard
   useEffect(() => {
-    fetchDashboardData();
-  }, [selectedYear, selectedMonth]);
+    if (!useStaticFallback) {
+      fetchDashboardData();
+    }
+  }, [selectedYear, selectedMonth, useStaticFallback]);
 
   // If there's an error loading, redirect to a known working page
   useEffect(() => {
@@ -55,6 +81,27 @@ export default function Home() {
       setSavedDailyBudget(0);
     };
   }, [selectedYear, selectedMonth]);
+
+  // If not logged in or using static fallback, show the static home page
+  if (!isLoggedIn || useStaticFallback) {
+    return <StaticHome />;
+  }
+
+  // If there's a loading error, show an error message
+  if (loadError) {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen">
+        <h1 className="text-2xl font-bold mb-4">Failed to load dashboard data</h1>
+        <p className="mb-4">Redirecting to the expense page...</p>
+        <button 
+          onClick={() => router.push('/pages/expense')} 
+          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+        >
+          Go to Expense Page
+        </button>
+      </div>
+    );
+  }
 
   const fetchDashboardData = async () => {
     // Always reset budget to 0 immediately
@@ -588,27 +635,6 @@ export default function Home() {
       </div>
     );
   };
-
-  // If there's a loading error, show an error message
-  if (loadError) {
-    return (
-      <div className="flex flex-col items-center justify-center h-screen">
-        <h1 className="text-2xl font-bold mb-4">Failed to load dashboard data</h1>
-        <p className="mb-4">Redirecting to the expense page...</p>
-        <button 
-          onClick={() => router.push('/pages/expense')} 
-          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-        >
-          Go to Expense Page
-        </button>
-      </div>
-    );
-  }
-  
-  // If not logged in, show login form
-  if (!isLoggedIn) {
-    return <LoginForm />;
-  }
 
   return (
     <div className="container mx-auto p-4">
