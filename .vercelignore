@@ -1,0 +1,5 @@
+# Ignore the problematic file path
+src/app/api/categories/[id]/route.ts
+
+# Ignore Next.js build artifacts
+.next 
