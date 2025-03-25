@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
 import { Income } from '@/models/income';
 import mongoose from 'mongoose';
@@ -11,13 +12,19 @@ const isValidObjectId = (id: string) => {
   return mongoose.Types.ObjectId.isValid(id);
 };
 
+// Helper function to extract ID from URL
+const extractIdFromUrl = (req: NextRequest) => {
+  const url = new URL(req.url);
+  const pathParts = url.pathname.split('/');
+  return pathParts[pathParts.length - 1];
+};
+
 // GET a specific income by ID
-export async function GET(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function GET(req: NextRequest) {
   try {
-    if (!isValidObjectId(params.id)) {
+    const id = extractIdFromUrl(req);
+    
+    if (!isValidObjectId(id)) {
       return NextResponse.json(
         { error: 'Invalid ID format' }, 
         { status: 400 }
@@ -27,7 +34,7 @@ export async function GET(
     await connectToDatabase();
     
     const income = await Income.findOne({
-      _id: params.id,
+      _id: id,
       userId: MOCK_USER_ID
     });
     
@@ -49,12 +56,11 @@ export async function GET(
 }
 
 // PUT - Update a specific income
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function PUT(request: NextRequest) {
   try {
-    if (!isValidObjectId(params.id)) {
+    const id = extractIdFromUrl(request);
+    
+    if (!isValidObjectId(id)) {
       return NextResponse.json(
         { error: 'Invalid ID format' }, 
         { status: 400 }
@@ -75,7 +81,7 @@ export async function PUT(
     await connectToDatabase();
     
     const updatedIncome = await Income.findOneAndUpdate(
-      { _id: params.id, userId: MOCK_USER_ID },
+      { _id: id, userId: MOCK_USER_ID },
       { 
         amount,
         category, 
@@ -104,12 +110,11 @@ export async function PUT(
 }
 
 // DELETE - Remove a specific income
-export async function DELETE(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(req: NextRequest) {
   try {
-    if (!isValidObjectId(params.id)) {
+    const id = extractIdFromUrl(req);
+    
+    if (!isValidObjectId(id)) {
       return NextResponse.json(
         { error: 'Invalid ID format' }, 
         { status: 400 }
@@ -119,7 +124,7 @@ export async function DELETE(
     await connectToDatabase();
     
     const result = await Income.findOneAndDelete({
-      _id: params.id,
+      _id: id,
       userId: MOCK_USER_ID
     });
     

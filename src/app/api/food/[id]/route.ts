@@ -1,11 +1,17 @@
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
 import { Food } from '@/models/food';
 
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(req: NextRequest) {
   try {
+    // Extract id from URL path
+    const url = new URL(req.url);
+    const pathParts = url.pathname.split('/');
+    const id = pathParts[pathParts.length - 1];
+    
     await connectToDatabase();
-    const foodItem = await Food.findById(params.id);
+    const foodItem = await Food.findById(id);
     
     if (!foodItem) {
       return NextResponse.json({ error: 'Food item not found' }, { status: 404 });
@@ -18,15 +24,20 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   }
 }
 
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(req: NextRequest) {
   try {
+    // Extract id from URL path
+    const url = new URL(req.url);
+    const pathParts = url.pathname.split('/');
+    const id = pathParts[pathParts.length - 1];
+    
     const data = await req.json();
     const { amount, note, date } = data;
 
     await connectToDatabase();
     
     // Find food item by ID
-    const foodItem = await Food.findById(params.id);
+    const foodItem = await Food.findById(id);
     if (!foodItem) {
       return NextResponse.json({ error: 'Food item not found' }, { status: 404 });
     }
@@ -39,7 +50,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     
     // Update and get the updated document
     const updatedFoodItem = await Food.findByIdAndUpdate(
-      params.id,
+      id,
       updatedData,
       { new: true }
     );
@@ -51,11 +62,16 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   }
 }
 
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(req: NextRequest) {
   try {
+    // Extract id from URL path
+    const url = new URL(req.url);
+    const pathParts = url.pathname.split('/');
+    const id = pathParts[pathParts.length - 1];
+    
     await connectToDatabase();
     
-    const result = await Food.findByIdAndDelete(params.id);
+    const result = await Food.findByIdAndDelete(id);
     
     if (!result) {
       return NextResponse.json({ error: 'Food item not found' }, { status: 404 });

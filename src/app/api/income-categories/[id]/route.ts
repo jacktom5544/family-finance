@@ -1,20 +1,27 @@
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
 import { IncomeCategory } from '@/models/income';
 
 // Mock user ID (in a real app, you would get this from an authenticated session)
 const MOCK_USER_ID = 'user123';
 
+// Helper function to extract ID from URL
+const extractIdFromUrl = (req: NextRequest) => {
+  const url = new URL(req.url);
+  const pathParts = url.pathname.split('/');
+  return pathParts[pathParts.length - 1];
+};
+
 // GET a specific income category
-export async function GET(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function GET(req: NextRequest) {
   try {
+    const id = extractIdFromUrl(req);
+    
     await connectToDatabase();
     
     const category = await IncomeCategory.findOne({
-      _id: params.id,
+      _id: id,
       userId: MOCK_USER_ID
     });
     
@@ -36,11 +43,9 @@ export async function GET(
 }
 
 // PUT - Update a specific income category
-export async function PUT(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function PUT(req: NextRequest) {
   try {
+    const id = extractIdFromUrl(req);
     const { name } = await req.json();
     
     if (!name || typeof name !== 'string') {
@@ -53,7 +58,7 @@ export async function PUT(
     await connectToDatabase();
     
     const updatedCategory = await IncomeCategory.findOneAndUpdate(
-      { _id: params.id, userId: MOCK_USER_ID },
+      { _id: id, userId: MOCK_USER_ID },
       { name },
       { new: true, runValidators: true }
     );
@@ -76,15 +81,14 @@ export async function PUT(
 }
 
 // DELETE - Remove a specific income category
-export async function DELETE(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(req: NextRequest) {
   try {
+    const id = extractIdFromUrl(req);
+    
     await connectToDatabase();
     
     const deletedCategory = await IncomeCategory.findOneAndDelete({
-      _id: params.id,
+      _id: id,
       userId: MOCK_USER_ID
     });
     
