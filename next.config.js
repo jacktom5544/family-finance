@@ -3,17 +3,24 @@ const nextConfig = {
   // Handle fallbacks to ensure a page is always rendered
   async rewrites() {
     return [
-      {
-        source: '/',
-        destination: '/index',
-      },
+      // Keep all normal routes intact
       {
         source: '/:path*',
         destination: '/:path*',
       },
+      // Ensure test-page and alt-page are directly accessible
+      {
+        source: '/test-page',
+        destination: '/test-page',
+      },
+      {
+        source: '/alt-page',
+        destination: '/alt-page',
+      },
+      // Handle 404 errors with static fallback
       {
         source: '/:path*',
-        destination: '/index',
+        destination: '/',
         has: [
           {
             type: 'header',
@@ -41,4 +48,5 @@ const nextConfig = {
   staticPageGenerationTimeout: 180,
 };
 
+module.exports = nextConfig; 
 module.exports = nextConfig; 
