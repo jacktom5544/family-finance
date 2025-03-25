@@ -1,13 +1,11 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import LoginForm from '@/components/LoginForm';
 import { useAuth } from './context/AuthContext';
 import { fetchExpenses, fetchBudget, fetchMonthlyIncome, fetchMonthlyExpenses } from '@/app/utils/api';
 import { formatAmount } from '@/app/utils/formatter';
-import StaticHome from './static-home';
-import Link from 'next/link';
 import { 
   BarChart, 
   Bar, 
@@ -22,53 +20,19 @@ import {
   Cell
 } from 'recharts';
 
-// This is a fallback component rendered before any React hydration
-const LoadingFallback = () => (
-  <div style={{
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: '100vh',
-    padding: '20px'
-  }}>
-    <h1 style={{ marginBottom: '20px', fontSize: '24px' }}>Family Finance</h1>
-    <p style={{ marginBottom: '20px' }}>Loading application...</p>
-    <div style={{ 
-      display: 'flex',
-      gap: '10px'
-    }}>
-      <a 
-        href="/test-page" 
-        style={{
-          padding: '10px 20px',
-          backgroundColor: '#3b82f6',
-          color: 'white',
-          borderRadius: '5px',
-          textDecoration: 'none'
-        }}
-      >
-        Test Page
-      </a>
-      <a 
-        href="/alt-page" 
-        style={{
-          padding: '10px 20px',
-          backgroundColor: '#10b981',
-          color: 'white',
-          borderRadius: '5px',
-          textDecoration: 'none'
-        }}
-      >
-        Alt Page
-      </a>
-    </div>
-  </div>
-);
+// Colors for the pie chart
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
 
 export default function Home() {
+  // Debug info
+  console.log("Home component rendering...");
+  
   const router = useRouter();
-  const { isLoggedIn } = useAuth();
+  const { isLoggedIn, isLoading: authLoading } = useAuth();
+  
+  // Log auth state for debugging
+  console.log("Auth state:", { isLoggedIn, authLoading });
+  
   const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
   const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth());
   const [monthlyFoodItems, setMonthlyFoodItems] = useState<any[]>([]);
@@ -77,22 +41,23 @@ export default function Home() {
   const [monthlyExpenseItems, setMonthlyExpenseItems] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
-  const [useStaticFallback, setUseStaticFallback] = useState(true);
 
   // Fetch all necessary data for the dashboard
   useEffect(() => {
-    // Skip data fetching if not logged in
-    if (!isLoggedIn) {
+    // Skip data fetching if still determining auth state or not logged in
+    if (authLoading || !isLoggedIn) {
       setIsLoading(false);
       return;
     }
 
+    console.log("Fetching dashboard data...");
     const fetchDashboardData = async () => {
       setIsLoading(true);
       setLoadError(false);
       try {
         // Fetch food expenses
         const foodResponse = await fetchExpenses(selectedMonth, selectedYear);
+        console.log("Food response:", foodResponse);
         if (Array.isArray(foodResponse)) {
           setMonthlyFoodItems(foodResponse.map(item => ({
             ...item,
@@ -105,12 +70,14 @@ export default function Home() {
         
         // Fetch budget
         const budgetResponse = await fetchBudget(selectedMonth, selectedYear);
+        console.log("Budget response:", budgetResponse);
         const budgetValue = budgetResponse?.dailyFoodBudget || 0;
         const numericBudget = typeof budgetValue === 'number' ? budgetValue : parseFloat(budgetValue || '0');
         setSavedDailyBudget(numericBudget > 0 ? numericBudget : 0);
         
         // Fetch income
         const incomeResponse = await fetchMonthlyIncome(selectedMonth, selectedYear);
+        console.log("Income response:", incomeResponse);
         if (Array.isArray(incomeResponse)) {
           setMonthlyIncomeItems(incomeResponse.map(item => ({
             ...item,
@@ -122,6 +89,7 @@ export default function Home() {
         
         // Fetch expenses
         const expensesResponse = await fetchMonthlyExpenses(selectedMonth, selectedYear);
+        console.log("Expenses response:", expensesResponse);
         if (Array.isArray(expensesResponse)) {
           setMonthlyExpenseItems(expensesResponse.map(item => ({
             ...item,
@@ -143,7 +111,27 @@ export default function Home() {
     };
 
     fetchDashboardData();
-  }, [isLoggedIn, selectedMonth, selectedYear]);
+  }, [isLoggedIn, authLoading, selectedMonth, selectedYear]);
+
+  // If auth is still loading, show a loading spinner
+  if (authLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen">
+        <h2 className="text-xl mb-4">Initializing application...</h2>
+        <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  // If not logged in, show the login form
+  if (!isLoggedIn) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen p-4">
+        <h1 className="text-3xl font-bold mb-8">Family Finance</h1>
+        <LoginForm />
+      </div>
+    );
+  }
 
   // If there's an error loading, show an error message with a button to navigate to expenses
   if (loadError) {
@@ -157,16 +145,6 @@ export default function Home() {
         >
           Go to Expense Page
         </button>
-      </div>
-    );
-  }
-
-  // If not logged in, show the login form
-  if (!isLoggedIn) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen p-4">
-        <h1 className="text-3xl font-bold mb-8">Family Finance</h1>
-        <LoginForm />
       </div>
     );
   }
@@ -209,472 +187,226 @@ export default function Home() {
     return sumOfDailyTotals / totalDays;
   };
 
-  // Check if over budget
-  const isOverBudget = () => {
-    if (!savedDailyBudget || savedDailyBudget <= 0) return false;
-    return calculateAverageDailyExpense() > savedDailyBudget;
+  // Calculate total income for the month
+  const calculateTotalIncome = () => {
+    if (!monthlyIncomeItems || monthlyIncomeItems.length === 0) return 0;
+    return monthlyIncomeItems.reduce((sum, item) => sum + parseFloat(item.amount), 0);
   };
 
-  // Calculate budget percentage (for progress bar)
-  const getBudgetPercentage = () => {
-    if (!savedDailyBudget || savedDailyBudget <= 0) return 0;
-    
-    const percentage = (calculateAverageDailyExpense() / savedDailyBudget) * 100;
-    return Math.min(percentage, 100); // Cap at 100%
+  // Calculate total expenses for the month
+  const calculateTotalExpenses = () => {
+    if (!monthlyExpenseItems || monthlyExpenseItems.length === 0) return 0;
+    return monthlyExpenseItems.reduce((sum, item) => sum + parseFloat(item.amount), 0);
   };
 
-  // Get emoji based on budget status
-  const getBudgetEmoji = () => {
-    if (!savedDailyBudget || savedDailyBudget <= 0) return '';
-    
-    const percentage = (calculateAverageDailyExpense() / savedDailyBudget) * 100;
-    
-    if (percentage > 100) {
-      return '😱'; // Way over budget
-    } else if (percentage > 90) {
-      return '😬'; // Nearly over budget
-    } else if (percentage > 75) {
-      return '😐'; // Be careful
-    } else if (percentage > 50) {
-      return '🙂'; // Doing okay
-    } else {
-      return '😄'; // Well under budget
-    }
-  };
-
-  // Get daily expenses for current month
+  // Get data for the daily expenses bar chart
   const getDailyExpenses = () => {
     if (!monthlyFoodItems || monthlyFoodItems.length === 0) return [];
     
     // Group expenses by day
-    const dailyExpenses: { day: string; value: number }[] = [];
+    const dailyExpenses: { [key: string]: number } = {};
     
     monthlyFoodItems.forEach(expense => {
       if (expense.date) {
         const expenseDate = new Date(expense.date);
+        const day = expenseDate.getDate().toString();
         
-        // Only include if it's a valid date and within the selected month/year
-        if (!isNaN(expenseDate.getTime()) && 
-            expenseDate.getMonth() === selectedMonth && 
-            expenseDate.getFullYear() === selectedYear) {
-            
-          // Extract just the day number and convert to string
-          const day = expenseDate.getDate().toString();
-          
-          // Check if we already have an entry for this day
-          const existingDay = dailyExpenses.find(item => item.day === day);
-          
-          // Ensure amount is a number
-          const amount = typeof expense.amount === 'number' ? expense.amount : parseFloat(expense.amount || '0');
-          
-          if (existingDay) {
-            // Add to existing day's total
-            existingDay.value += amount;
-          } else {
-            // Create a new entry for this day
-            dailyExpenses.push({
-              day,
-              value: amount
-            });
-          }
+        if (!dailyExpenses[day]) {
+          dailyExpenses[day] = 0;
         }
+        
+        dailyExpenses[day] += parseFloat(expense.amount);
       }
     });
     
-    return dailyExpenses;
+    // Convert to array format for chart
+    return Object.entries(dailyExpenses).map(([day, amount]) => ({
+      day,
+      amount
+    })).sort((a, b) => parseInt(a.day) - parseInt(b.day));
   };
 
-  // Process income data for pie chart
-  const getIncomeChartData = () => {
-    if (!monthlyIncomeItems || monthlyIncomeItems.length === 0) return [];
-    
-    // Group income by category
-    const incomeByCategory: { [key: string]: number } = {};
-    
-    monthlyIncomeItems.forEach(income => {
-      const category = income.category || 'Other';
-      if (!incomeByCategory[category]) {
-        incomeByCategory[category] = 0;
-      }
-      incomeByCategory[category] += income.amount;
-    });
-    
-    // Convert to array format for pie chart
-    return Object.entries(incomeByCategory).map(([name, value]) => ({
-      name,
-      value
-    }));
-  };
-
-  // Process expense data for pie chart
-  const getExpenseChartData = () => {
+  // Create expense category data for pie chart
+  const getExpenseCategories = () => {
     if (!monthlyExpenseItems || monthlyExpenseItems.length === 0) return [];
     
     // Group expenses by category
-    const expensesByCategory: { [key: string]: number } = {};
+    const categoryExpenses: { [key: string]: number } = {};
     
     monthlyExpenseItems.forEach(expense => {
-      const category = expense.category || 'Other';
-      if (!expensesByCategory[category]) {
-        expensesByCategory[category] = 0;
+      const category = expense.category || 'Uncategorized';
+      
+      if (!categoryExpenses[category]) {
+        categoryExpenses[category] = 0;
       }
-      expensesByCategory[category] += expense.amount;
+      
+      categoryExpenses[category] += parseFloat(expense.amount);
     });
     
-    // Convert to array format for pie chart
-    return Object.entries(expensesByCategory).map(([name, value]) => ({
+    // Convert to array format for chart
+    return Object.entries(categoryExpenses).map(([name, value]) => ({
       name,
       value
     }));
   };
 
-  // Get total income for the month
-  const getTotalIncome = () => {
-    return monthlyIncomeItems.reduce((total, item) => total + item.amount, 0);
-  };
-
-  // Get total expenses for the month
-  const getTotalExpenses = () => {
-    return monthlyExpenseItems.reduce((total, item) => total + item.amount, 0);
-  };
-
-  // Render total income and expense chart
-  const renderIncomeExpenseChart = () => {
-    const totalIncome = getTotalIncome();
-    const totalExpenses = getTotalExpenses();
-    const balance = totalIncome - totalExpenses;
+  // Get emoji based on budget status
+  const getBudgetEmoji = () => {
+    const avgDailyExpense = calculateAverageDailyExpense();
     
-    // Data for the bar chart
-    const chartData = [
-      { name: 'Income', value: totalIncome, color: '#3B82F6' },
-      { name: 'Expenses', value: totalExpenses, color: '#EF4444' },
-      { name: 'Balance', value: balance, color: '#10B981' }
-    ];
+    if (savedDailyBudget === 0) return '📊';
+    if (avgDailyExpense <= savedDailyBudget * 0.5) return '😀';
+    if (avgDailyExpense <= savedDailyBudget * 0.8) return '🙂';
+    if (avgDailyExpense <= savedDailyBudget) return '😐';
+    if (avgDailyExpense <= savedDailyBudget * 1.2) return '😕';
+    return '😨';
+  };
 
-    return (
-      <div className="w-full p-6 bg-white rounded-lg shadow mb-6">
-        <div className="flex justify-between items-center mb-5">
-          <h3 className="text-lg font-semibold">Income & Expenses</h3>
-          <div className="text-sm font-medium text-gray-600">
-            {['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][selectedMonth]} {selectedYear}
-          </div>
+  // Dashboard UI
+  return (
+    <div className="p-4">
+      <h1 className="text-2xl font-bold mb-6">Dashboard {getBudgetEmoji()}</h1>
+      
+      {/* Month and Year Selector */}
+      <div className="flex mb-6 space-x-4">
+        <select 
+          value={selectedMonth}
+          onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
+          className="p-2 border rounded"
+        >
+          {Array.from({ length: 12 }, (_, i) => (
+            <option key={i} value={i}>
+              {new Date(2000, i, 1).toLocaleString('default', { month: 'long' })}
+            </option>
+          ))}
+        </select>
+        
+        <select 
+          value={selectedYear}
+          onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+          className="p-2 border rounded"
+        >
+          {Array.from({ length: 5 }, (_, i) => {
+            const year = new Date().getFullYear() - 2 + i;
+            return (
+              <option key={year} value={year}>
+                {year}
+              </option>
+            );
+          })}
+        </select>
+      </div>
+      
+      {/* Budget Summary */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <div className="bg-blue-100 p-4 rounded shadow">
+          <h2 className="text-lg font-semibold mb-2">Daily Food Budget</h2>
+          <p className="text-2xl">{formatAmount(savedDailyBudget)}</p>
+          <p className="text-sm text-gray-600">
+            Avg Daily: {formatAmount(calculateAverageDailyExpense())}
+          </p>
         </div>
         
-        <div className="grid grid-cols-2 gap-6">
-          {/* Summary Section */}
-          <div className="flex flex-col space-y-4">
-            <div className="p-4 bg-blue-50 rounded-lg">
-              <div className="text-sm text-blue-800 mb-1">Total Income</div>
-              <div className="text-2xl font-bold text-blue-700">{formatAmount(totalIncome)}</div>
-            </div>
-            
-            <div className="p-4 bg-red-50 rounded-lg">
-              <div className="text-sm text-red-800 mb-1">Total Expenses</div>
-              <div className="text-2xl font-bold text-red-700">{formatAmount(totalExpenses)}</div>
-            </div>
-            
-            <div className="p-4 bg-green-50 rounded-lg">
-              <div className="text-sm text-green-800 mb-1">Balance</div>
-              <div className="text-2xl font-bold text-green-700">{formatAmount(balance)}</div>
-            </div>
-          </div>
-          
-          {/* Bar Chart Section */}
-          <div className="h-[250px] mt-4">
+        <div className="bg-green-100 p-4 rounded shadow">
+          <h2 className="text-lg font-semibold mb-2">Monthly Income</h2>
+          <p className="text-2xl">{formatAmount(calculateTotalIncome())}</p>
+          <p className="text-sm text-gray-600">
+            From {monthlyIncomeItems.length} sources
+          </p>
+        </div>
+        
+        <div className="bg-red-100 p-4 rounded shadow">
+          <h2 className="text-lg font-semibold mb-2">Monthly Expenses</h2>
+          <p className="text-2xl">{formatAmount(calculateTotalExpenses())}</p>
+          <p className="text-sm text-gray-600">
+            Across {monthlyExpenseItems.length} items
+          </p>
+        </div>
+      </div>
+      
+      {/* Daily Expenses Chart */}
+      <div className="mb-8">
+        <h2 className="text-xl font-semibold mb-4">Daily Food Expenses</h2>
+        <div className="h-60 w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={getDailyExpenses()}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="day" />
+              <YAxis />
+              <Tooltip formatter={(value) => formatAmount(value as number)} />
+              <Legend />
+              <Bar dataKey="amount" fill="#8884d8" name="Daily Food Expense" />
+              {savedDailyBudget > 0 && (
+                <Bar 
+                  dataKey={() => savedDailyBudget} 
+                  fill="#82ca9d" 
+                  name="Daily Budget"
+                  stackId="stack"
+                />
+              )}
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+      
+      {/* Expense Categories Pie Chart */}
+      {monthlyExpenseItems.length > 0 && (
+        <div className="mb-8">
+          <h2 className="text-xl font-semibold mb-4">Expense Categories</h2>
+          <div className="h-72 w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart
-                data={chartData}
-                margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="name" />
-                <YAxis 
-                  tickFormatter={(value) => formatAmount(value)}
-                  width={80}
-                />
-                <Tooltip 
-                  formatter={(value) => formatAmount(value as number)}
-                  contentStyle={{ border: '1px solid #e2e8f0', borderRadius: '0.375rem', padding: '10px' }}
-                />
-                <Bar dataKey="value" radius={[8, 8, 0, 0]}>
-                  {chartData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
+              <PieChart>
+                <Pie
+                  data={getExpenseCategories()}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={true}
+                  label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                  outerRadius={80}
+                  fill="#8884d8"
+                  dataKey="value"
+                >
+                  {getExpenseCategories().map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
-                </Bar>
-              </BarChart>
+                </Pie>
+                <Tooltip formatter={(value) => formatAmount(value as number)} />
+              </PieChart>
             </ResponsiveContainer>
           </div>
         </div>
-      </div>
-    );
-  };
-
-  // Render daily budget section (imported from Food page)
-  const renderDailyBudgetSection = () => {
-    // Calculate the average daily expense using our fixed function
-    const averageDailyExpense = calculateAverageDailyExpense();
-    
-    // Check if we have a valid budget - never set the state during render!
-    const hasBudget = typeof savedDailyBudget === 'number' && savedDailyBudget > 0;
-    console.log(`Rendering budget section: Budget=${savedDailyBudget}, Type=${typeof savedDailyBudget}, Has Budget=${hasBudget}`);
-    
-    // Calculate budget percentage for progress bar
-    const budgetPercentage = getBudgetPercentage();
-    const overBudget = isOverBudget();
-    
-    return (
-      <div className="w-full p-6 bg-white rounded-lg shadow mb-6">
-        <h3 className="text-lg font-semibold mb-5">Daily Food Budget</h3>
-        
-        <div className="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
-          <div className="flex justify-between items-end mb-3">
-            <span className="block text-sm font-medium text-gray-700">Average Daily Expense</span>
-            <span className={`text-xl font-bold ${hasBudget ? (overBudget ? 'text-red-600' : 'text-green-600') : 'text-gray-600'}`}>
-              {formatAmount(averageDailyExpense)}
-            </span>
-          </div>
-          
-          {hasBudget ? (
-            <>
-              <div className="w-full bg-gray-200 rounded-full h-5 mb-2">
-                <div 
-                  className={`h-5 rounded-full ${overBudget ? 'bg-red-600' : 'bg-green-600'}`} 
-                  style={{ width: `${budgetPercentage}%` }}
-                ></div>
-              </div>
-              <div className="flex justify-between text-xs text-gray-500 mb-3">
-                <span>0</span>
-                <span>{formatAmount(savedDailyBudget)}</span>
-              </div>
-              <div className="mt-3 text-sm font-medium text-center p-2 bg-white rounded-md border border-gray-200">
-                {overBudget ? (
-                  <span className="text-red-600">
-                    {getBudgetEmoji()} You are over budget by {formatAmount(averageDailyExpense - savedDailyBudget)} per day
-                  </span>
-                ) : (
-                  <span className="text-green-600">
-                    {getBudgetEmoji()} You are under budget by {formatAmount(savedDailyBudget - averageDailyExpense)} per day
-                  </span>
-                )}
-              </div>
-            </>
-          ) : (
-            <div className="mt-3 text-sm text-center p-2 bg-white rounded-md border border-gray-200">
-              Daily budget is not set.
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  };
-
-  // Render daily food expenses chart
-  const renderDailyFoodChart = () => {
-    const dailyData = getDailyExpenses();
-    console.log('Daily data for chart:', dailyData);
-    
-    if (!dailyData || dailyData.length === 0) {
-      return (
-        <div className="w-full p-6 bg-white rounded-lg shadow mb-6">
-          <h3 className="text-lg font-semibold mb-5">Daily Food Expenses</h3>
-          <div className="p-10 text-center text-gray-500">No daily expenses found for the selected month</div>
-        </div>
-      );
-    }
-
-    // Calculate the maximum value for scaling
-    const maxValue = Math.max(...dailyData.map(item => item.value), 100);
-    const daysInMonth = new Date(selectedYear, selectedMonth + 1, 0).getDate();
-    
-    // Prepare data for all days in month (including days with zero expenses)
-    const allDaysData = Array.from({ length: daysInMonth }, (_, index) => {
-      const day = (index + 1).toString();
-      const existingData = dailyData.find(item => Number(item.day) === index + 1);
-      return {
-        day,
-        value: existingData ? existingData.value : 0
-      };
-    });
-
-    // Calculate monthly total and average
-    const monthlyTotal = allDaysData.reduce((sum, item) => sum + item.value, 0);
-    console.log(`Monthly total: ${monthlyTotal}`);
-    
-    // Calculate monthly average as total divided by number of days with expenses
-    const daysWithExpenses = dailyData.length;
-    const monthlyAverage = daysWithExpenses > 0 ? monthlyTotal / daysWithExpenses : 0;
-    console.log(`Days with expenses: ${daysWithExpenses}, Monthly average: ${monthlyAverage}`);
-
-    return (
-      <div className="w-full p-6 bg-white rounded-lg shadow mb-6">
-        <div className="flex justify-between items-center mb-5">
-          <h3 className="text-lg font-semibold">Daily Food Expenses</h3>
-          <div className="text-sm font-medium text-gray-600">
-            Monthly Average: <span className="text-blue-600 font-bold">{formatAmount(monthlyAverage)}</span>
-          </div>
-        </div>
-        
-        <div className="relative h-[300px] mt-4">
-          {/* Y-axis labels */}
-          <div className="absolute inset-y-0 left-0 w-16 flex flex-col justify-between pr-2 text-xs text-gray-600 text-right">
-            <span>{formatAmount(maxValue)}</span>
-            <span>{formatAmount(maxValue * 0.75)}</span>
-            <span>{formatAmount(maxValue * 0.5)}</span>
-            <span>{formatAmount(maxValue * 0.25)}</span>
-            <span>{formatAmount(0)}</span>
-          </div>
-          
-          {/* Chart container */}
-          <div className="absolute inset-0 left-16 border border-gray-200 rounded-md bg-white">
-            {/* Horizontal grid lines */}
-            <div className="absolute inset-0 flex flex-col justify-between pointer-events-none">
-              <div className="h-px border-t border-gray-200 border-dashed"></div>
-              <div className="h-px border-t border-gray-200 border-dashed"></div>
-              <div className="h-px border-t border-gray-200 border-dashed"></div>
-              <div className="h-px border-t border-gray-200 border-dashed"></div>
-              <div className="h-px border-t border-gray-200 border-dashed"></div>
-            </div>
-            
-            {/* Bars */}
-            <div 
-              className="absolute inset-x-0 bottom-8 top-0 px-2" 
-              style={{ 
-                display: 'grid', 
-                gridTemplateColumns: `repeat(${daysInMonth}, 1fr)`, 
-                gap: '2px' 
-              }}
-            >
-              {allDaysData.map((item: { day: string; value: number }, index) => {
-                const height = maxValue > 0 ? (item.value / maxValue) * 100 : 0;
-                const isToday = 
-                  selectedMonth === new Date().getMonth() && 
-                  selectedYear === new Date().getFullYear() && 
-                  index + 1 === new Date().getDate();
-                
-                return (
-                  <div 
-                    key={index} 
-                    className="flex flex-col items-center justify-end relative group"
-                  >
-                    {/* Bar */}
-                    {item.value > 0 && (
-                      <div
-                        className={`w-5 ${isToday ? 'bg-blue-600' : 'bg-blue-500'} rounded-t-sm transition-all duration-200 group-hover:bg-blue-600`}
-                        style={{ height: `${height}%` }}
-                      ></div>
-                    )}
-                    
-                    {/* Tooltip */}
-                    <div className="absolute bottom-full mb-1 opacity-0 group-hover:opacity-100 bg-gray-800 text-white text-xs rounded px-2 py-1 pointer-events-none transition-opacity z-10 shadow-lg">
-                      <div className="font-semibold">Day {item.day}</div>
-                      <div>{formatAmount(item.value)}</div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-            
-            {/* Day labels */}
-            <div 
-              className="absolute bottom-0 inset-x-0 h-8 flex items-center px-2"
-              style={{ 
-                display: 'grid', 
-                gridTemplateColumns: `repeat(${daysInMonth}, 1fr)`,
-                gap: '2px' 
-              }}
-            >
-              {allDaysData.map((item: { day: string; value: number }, index) => {
-                const isToday = 
-                  selectedMonth === new Date().getMonth() && 
-                  selectedYear === new Date().getFullYear() && 
-                  index + 1 === new Date().getDate();
-                  
-                return (
-                  <div 
-                    key={index} 
-                    className={`text-xs text-center ${isToday ? 'font-bold text-blue-600' : 'text-gray-500'}`}
-                  >
-                    {(index + 1) % 2 === 0 || isToday ? item.day : ""}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  return (
-    <div className="container mx-auto p-4">
-      {!isLoggedIn ? (
-        <LoginForm />
-      ) : (
-        <>
-          <div className="flex justify-between items-center mb-6">
-            <h1 className="text-2xl font-bold">Financial Dashboard</h1>
-            <div className="bg-white p-2 rounded-lg shadow">
-              {/* Year Tabs - Now First */}
-              <div className="mb-2">
-                <div className="flex justify-center space-x-2">
-                  {[2024, 2025, 2026].map((year) => (
-                    <button
-                      key={year}
-                      className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all duration-200 ${
-                        selectedYear === year 
-                          ? 'bg-blue-500 text-white shadow-sm' 
-                          : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
-                      }`}
-                      onClick={() => setSelectedYear(year)}
-                    >
-                      {year}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              
-              {/* Month Tabs - Now Second */}
-              <div>
-                <div className="flex flex-wrap justify-center rounded-md bg-gray-50 p-1">
-                  {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].map((month, index) => (
-                    <button
-                      key={month}
-                      className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all duration-200 ${
-                        selectedMonth === index 
-                          ? 'bg-blue-500 text-white shadow-sm' 
-                          : 'text-gray-600 hover:bg-gray-100'
-                      }`}
-                      onClick={() => setSelectedMonth(index)}
-                    >
-                      {month}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {isLoading ? (
-            <div className="w-full p-10 text-center">
-              <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]" role="status">
-                <span className="!absolute !-m-px !h-px !w-px !overflow-hidden !whitespace-nowrap !border-0 !p-0 ![clip:rect(0,0,0,0)]">Loading...</span>
-              </div>
-              <p className="mt-2 text-gray-600">Loading your financial data...</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 gap-6">
-              {/* Income & Expenses Overview */}
-              {renderIncomeExpenseChart()}
-              
-              {/* Daily Food Budget */}
-              {renderDailyBudgetSection()}
-              
-              {/* Daily Food Expenses Chart */}
-              {renderDailyFoodChart()}
-            </div>
-          )}
-        </>
       )}
+      
+      {/* Quick Links */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <button 
+          onClick={() => router.push('/pages/expense')}
+          className="p-3 bg-indigo-500 text-white rounded hover:bg-indigo-600"
+        >
+          Manage Expenses
+        </button>
+        
+        <button 
+          onClick={() => router.push('/pages/income')}
+          className="p-3 bg-green-500 text-white rounded hover:bg-green-600"
+        >
+          Manage Income
+        </button>
+        
+        <button 
+          onClick={() => router.push('/pages/food')}
+          className="p-3 bg-yellow-500 text-white rounded hover:bg-yellow-600"
+        >
+          Food Tracking
+        </button>
+        
+        <button 
+          onClick={() => router.push('/pages/saving')}
+          className="p-3 bg-purple-500 text-white rounded hover:bg-purple-600"
+        >
+          Savings Goals
+        </button>
+      </div>
     </div>
   );
 }
