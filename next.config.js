@@ -1,9 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Specify both pages and app directory usage
-  experimental: {
-    appDir: true,
-  },
   // Handle fallbacks to ensure a page is always rendered
   async rewrites() {
     return [
@@ -37,9 +33,7 @@ const nextConfig = {
       },
     ];
   },
-  // Ensure static routing works properly
-  trailingSlash: true,
-  // Add output configuration
+  // Ensure proper page generation
   output: 'standalone',
   // Disable strict mode for easier development
   reactStrictMode: false,
