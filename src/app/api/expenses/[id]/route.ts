@@ -1,17 +1,19 @@
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
 import { Expense } from '@/models/expense';
 
 // Mock user ID (in a real app, you would get this from an authenticated session)
 const MOCK_USER_ID = 'user123';
 
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function PUT(req: NextRequest) {
   try {
-    const id = params.id;
-    const data = await request.json();
+    // Extract id from URL path
+    const url = new URL(req.url);
+    const pathParts = url.pathname.split('/');
+    const id = pathParts[pathParts.length - 1];
+    
+    const data = await req.json();
     const { amount, category, note, date } = data;
     
     // Validate required fields
@@ -47,12 +49,12 @@ export async function PUT(
   }
 }
 
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(req: NextRequest) {
   try {
-    const id = params.id;
+    // Extract id from URL path
+    const url = new URL(req.url);
+    const pathParts = url.pathname.split('/');
+    const id = pathParts[pathParts.length - 1];
     
     await connectToDatabase();
     
