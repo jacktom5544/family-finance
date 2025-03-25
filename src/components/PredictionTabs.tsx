@@ -556,7 +556,7 @@ export default function PredictionTabs({ currentSaving = 0 }: { currentSaving?: 
               <p className="text-xl font-bold text-green-600">
                 ₱{formatAmount(incomeTotal)}
                 <span className="text-sm ml-1 font-normal">
-                  ({formatAmount(incomeTotal * phpToJpy)} ¥)
+                  (¥{formatAmount(incomeTotal * phpToJpy)})
                 </span>
               </p>
               <div className="mt-2 pt-2 border-t border-green-100">
@@ -575,7 +575,7 @@ export default function PredictionTabs({ currentSaving = 0 }: { currentSaving?: 
               <p className="text-xl font-bold text-red-600">
                 ₱{formatAmount(expenseTotal)}
                 <span className="text-sm ml-1 font-normal">
-                  ({formatAmount(expenseTotal * phpToJpy)} ¥)
+                  ( ¥{formatAmount(expenseTotal * phpToJpy)} )
                 </span>
               </p>
             </div>
@@ -586,7 +586,7 @@ export default function PredictionTabs({ currentSaving = 0 }: { currentSaving?: 
               <p className={`text-xl font-bold ${balance >= 0 ? 'text-blue-600' : 'text-yellow-600'}`}>
                 ₱{formatAmount(balance)}
                 <span className="text-sm ml-1 font-normal">
-                  ({formatAmount(balance * phpToJpy)} ¥)
+                  (¥{formatAmount(balance * phpToJpy)})
                 </span>
               </p>
             </div>
@@ -642,7 +642,7 @@ export default function PredictionTabs({ currentSaving = 0 }: { currentSaving?: 
                   ₱{formatAmount(currentSaving || 0)}
                 </p>
                 <p className="text-sm text-blue-600">
-                  {formatAmount((currentSaving || 0) * phpToJpy)} ¥
+                ¥{formatAmount((currentSaving || 0) * phpToJpy)} 
                 </p>
               </div>
               <div className="bg-green-50 p-4 rounded-lg">
@@ -651,7 +651,7 @@ export default function PredictionTabs({ currentSaving = 0 }: { currentSaving?: 
                   ₱{formatAmount(totalIncome)}
                 </p>
                 <p className="text-sm text-green-600">
-                  {formatAmount(totalIncome * phpToJpy)} ¥
+                  ¥{formatAmount(totalIncome * phpToJpy)}
                 </p>
                 <div className="mt-2 pt-2 border-t border-green-100">
                   <p className="text-xs text-green-700 flex justify-between">
@@ -671,7 +671,7 @@ export default function PredictionTabs({ currentSaving = 0 }: { currentSaving?: 
                   ₱{formatAmount(totalExpense)}
                 </p>
                 <p className="text-sm text-red-600">
-                  {formatAmount(totalExpense * phpToJpy)} ¥
+                ¥{formatAmount(totalExpense * phpToJpy)}
                 </p>
               </div>
               <div className={`p-4 rounded-lg ${balance >= 0 ? 'bg-purple-50' : 'bg-yellow-50'}`}>
@@ -682,7 +682,7 @@ export default function PredictionTabs({ currentSaving = 0 }: { currentSaving?: 
                   ₱{formatAmount(projectedSaving)}
                 </p>
                 <p className={`text-sm ${balance >= 0 ? 'text-purple-600' : 'text-yellow-600'}`}>
-                  {formatAmount(projectedSaving * phpToJpy)} ¥
+                  ¥{formatAmount(projectedSaving * phpToJpy)}
                 </p>
               </div>
             </div>
