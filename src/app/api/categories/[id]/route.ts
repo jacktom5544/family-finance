@@ -7,10 +7,10 @@ const MOCK_USER_ID = 'user123';
 
 export async function PUT(
   request: NextRequest,
-  context: { params: { id: string } }
+  { params }: { params: { id: string } }
 ) {
   try {
-    const id = context.params.id;
+    const id = params.id;
     const data = await request.json();
     const { name } = data;
     
