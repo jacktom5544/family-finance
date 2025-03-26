@@ -32,7 +32,7 @@ const Sidebar = () => {
   return (
     <div className="hidden xl:block min-h-screen w-60 bg-gray-900 text-white p-4">
       <div className="flex items-center mb-8">
-        <span className="text-2xl font-bold">Piyomaru Finance2</span>
+        <span className="text-2xl font-bold">Piyomaru Finance3</span>
         <img src="/logo.png" alt="logo" className="w-30 h-30" />
       </div>
 
